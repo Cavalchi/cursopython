@@ -1,13 +1,19 @@
 import cv2
 import mediapipe as mp
 import numpy as np
+from funcoes import play_pause_spotify  # Adicione esta linha
 
 # Inicializa o mediapipe
 mp_hands = mp.solutions.hands
 mp_drawing = mp.solutions.drawing_utils
 hands = mp_hands.Hands()
 
+# Adicione esta linha
+polegar_indicador_levantado_anteriormente = False
+
 def reconhecer_maos(frame):
+    global polegar_indicador_levantado_anteriormente  # Adicione esta linha
+
     # Converte a imagem para RGB
     image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
@@ -33,6 +39,13 @@ def reconhecer_maos(frame):
                     dedos_levantados.append(dedo)
 
             # Verifica gestos específicos
+            if set(['Polegar', 'Indicador']).issubset(dedos_levantados) and len(dedos_levantados) == 2:
+                if not polegar_indicador_levantado_anteriormente:
+                    play_pause_spotify()  # Adicione esta linha
+                polegar_indicador_levantado_anteriormente = True
+            else:
+                polegar_indicador_levantado_anteriormente = False
+
             if set(['Polegar', 'Indicador']).issubset(dedos_levantados) and len(dedos_levantados) == 2:
                 cv2.putText(frame, 'Arminha', (int(hand_landmarks.landmark[0].x * frame.shape[1]), int(hand_landmarks.landmark[0].y * frame.shape[0]) - 20), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
             elif set(['Indicador', 'Medio']).issubset(dedos_levantados) and len(dedos_levantados) == 2:
