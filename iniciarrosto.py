@@ -3,7 +3,7 @@ import rosto
 import maos
 
 def abrir_camera():
-    cap = cv2.VideoCapture('http://192.168.0.191:4747/video')
+    cap = cv2.VideoCapture(0)  # 0 é geralmente a câmera integrada
 
     while True:
         ret, frame = cap.read()
@@ -17,7 +17,7 @@ def abrir_camera():
         frame = maos.reconhecer_maos(frame)
 
         # Exibe o frame
-        cv2.imshow('DroidCam', frame)
+        cv2.imshow('Webcam', frame)
 
         # Se a tecla 'q' for pressionada, sai do loop
         if cv2.waitKey(1) & 0xFF == ord('q'):

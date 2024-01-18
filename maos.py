@@ -1,8 +1,8 @@
 # main.py
-import cv2
 import mediapipe as mp
+import cv2
 import numpy as np
-from funcoes import play_pause_spotify, next_track_spotify
+from funcoes import play_pause_spotify, next_track_spotify, aumentar_volume_spotify, diminuir_volume_spotify
 
 # Inicializa o mediapipe
 mp_hands = mp.solutions.hands
@@ -11,9 +11,11 @@ hands = mp_hands.Hands()
 
 polegar_indicador_levantado_anteriormente = False
 polegar_medio_indicador_levantado_anteriormente = False
+polegar_minimo_levantado_anteriormente = False
+polegar_indicador_minimo_levantado_anteriormente = False
 
 def reconhecer_maos(frame):
-    global polegar_indicador_levantado_anteriormente, polegar_medio_indicador_levantado_anteriormente
+    global polegar_indicador_levantado_anteriormente, polegar_medio_indicador_levantado_anteriormente, polegar_minimo_levantado_anteriormente, polegar_indicador_minimo_levantado_anteriormente
 
     # Converte a imagem para RGB
     image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -37,6 +39,19 @@ def reconhecer_maos(frame):
                     dedos_levantados.append(dedo)
 
             # Verifica gestos específicos
+            if set(['Polegar', 'Minimo']).issubset(dedos_levantados) and len(dedos_levantados) == 2:
+                aumentar_volume_spotify()
+                polegar_minimo_levantado_anteriormente = True
+            else:
+                polegar_minimo_levantado_anteriormente = False
+
+            if set(['Polegar', 'Indicador', 'Minimo']).issubset(dedos_levantados) and len(dedos_levantados) == 3:
+                diminuir_volume_spotify()
+                polegar_indicador_minimo_levantado_anteriormente = True
+            else:
+                polegar_indicador_minimo_levantado_anteriormente = False
+
+            # Outros gestos
             if set(['Polegar', 'Indicador']).issubset(dedos_levantados) and len(dedos_levantados) == 2:
                 if not polegar_indicador_levantado_anteriormente:
                     play_pause_spotify()
@@ -51,14 +66,10 @@ def reconhecer_maos(frame):
             else:
                 polegar_medio_indicador_levantado_anteriormente = False
 
-            if set(['Polegar', 'Indicador']).issubset(dedos_levantados) and len(dedos_levantados) == 2:
-                cv2.putText(frame, 'Arminha', (int(hand_landmarks.landmark[0].x * frame.shape[1]), int(hand_landmarks.landmark[0].y * frame.shape[0]) - 20), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
-            elif set(['Indicador', 'Medio']).issubset(dedos_levantados) and len(dedos_levantados) == 2:
-                cv2.putText(frame, 'PAZ', (int(hand_landmarks.landmark[0].x * frame.shape[1]), int(hand_landmarks.landmark[0].y * frame.shape[0]) - 20), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
-            else:
-                for dedo in dedos_levantados:
-                    if dedo == 'Polegar' and 'Indicador' in dedos_levantados:
-                        continue
-                    cv2.putText(frame, dedo, (int(hand_landmarks.landmark[4*dedos.index(dedo)+4].x * frame.shape[1]), int(hand_landmarks.landmark[4*dedos.index(dedo)+4].y * frame.shape[0]) - 20), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
+            # Desenha os nomes dos dedos levantados na tela
+            for dedo in dedos_levantados:
+                if dedo == 'Polegar' and 'Indicador' in dedos_levantados:
+                    continue
+                cv2.putText(frame, dedo, (int(hand_landmarks.landmark[4*dedos.index(dedo)+4].x * frame.shape[1]), int(hand_landmarks.landmark[4*dedos.index(dedo)+4].y * frame.shape[0]) - 20), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
 
     return frame
